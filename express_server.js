@@ -49,7 +49,7 @@ app.get("/hello", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  console.log(req.body); // Log the POST request body to the console
+  //console.log(req.body); // Log the POST request body to the console
   const id = generateRandomString();
   urlDatabase[id] = req.body.longURL;
   res.redirect(`/urls/${id}`);
@@ -57,9 +57,17 @@ app.post("/urls", (req, res) => {
 
 app.post("/urls/:id/delete", (req, res) => {
   delete urlDatabase[req.params.id];
-  console.log(urlDatabase);
+  //console.log(urlDatabase);
   res.redirect("/urls");
 });
+
+app.post("/urls/:id/edit", (req, res) => {
+  urlDatabase[req.params.id] = req.body.longURL;
+  console.log(req.body);
+  console.log(req.params.id)
+  //console.log("This is an edit");
+  res.redirect("/urls");
+})
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
