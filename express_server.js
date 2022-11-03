@@ -2,7 +2,8 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 const crypto = require("crypto");
-function generateRandomString () {
+const { url } = require("inspector");
+function generateRandomString() {
   let id = crypto.randomBytes(3).toString("hex");
   return id;
 };
@@ -35,13 +36,13 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:id", (req, res) => {
-  const templateVars = { id : req.params.id, longURL : urlDatabase[req.params.id] };
+  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id] };
   res.render("urls_show", templateVars);
-})
+});
 
 app.get("/u/:id", (req, res) => {
   res.redirect(urlDatabase[req.params.id]);
-})
+});
 
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
@@ -52,6 +53,12 @@ app.post("/urls", (req, res) => {
   const id = generateRandomString();
   urlDatabase[id] = req.body.longURL;
   res.redirect(`/urls/${id}`);
+});
+
+app.post("/urls/:id/delete", (req, res) => {
+  delete urlDatabase[req.params.id];
+  console.log(urlDatabase);
+  res.redirect("/urls");
 });
 
 app.listen(PORT, () => {
