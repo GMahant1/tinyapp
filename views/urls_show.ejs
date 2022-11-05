@@ -21,13 +21,13 @@
           Short URL ID: <a href="/u/<%= id %>"><%= id %></a>
         </p>
       </div>
-      <div class="card-footer text-muted"></div>
+      
 
     <div class="card text-center">
-      <div class="card-header"></div>
       <div class="card-body">
         <h6 class="card-title">Edit</h6>
-        <form class="form-inline" action="/urls/<%= id %>/edit" method="POST">
+        <div class="card-footer">
+        <form class="form-inline justify-content-center" action="/urls/<%= id %>/edit" method="POST">
           <div class="form-group mb-2">
             <label for="longURL">New URL:</label>
             <input
@@ -40,7 +40,7 @@
             <button type="submit" class="btn btn-primary">Submit</button>
           </div>
         </form>
-      
+      </div>
     </div>
     <!-- Bootstrap JS -->
     <script
