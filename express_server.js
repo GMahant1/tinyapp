@@ -43,6 +43,11 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
+app._router.get("/register", (req, res) => {
+  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], Username: req.cookies["username"] };
+  res.render("user_registration", templateVars);
+})
+
 app.get("/u/:id", (req, res) => {
   res.redirect(urlDatabase[req.params.id]);
 });
