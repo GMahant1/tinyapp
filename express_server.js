@@ -13,6 +13,11 @@ function generateRandomString() {
 
 
 app.set("view engine", "ejs");
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieSession({
+  name: 'session',
+  keys: ['key1', 'key2']
+}));
 
 //urls database
 const urlDatabase = {
@@ -69,28 +74,24 @@ const hashPassword = function(password) {
   return bcrypt.hashSync(password, 10);
 };
 
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieSession({
-  name: 'session',
-  keys: ['key1', 'key2']
-}));
 
-//checked
+
+
 app.get("/", (req, res) => {
   res.send("Hello, Welcome to the Home Page!");
 });
 
-//checked
+
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
-//checked
+
 app.get("/users.json", (req, res) => {
   res.json(users);
 });
 
-//checked
+
 app.get("/urls", (req, res) => {
   const cookieValue = req.session.user_id;
   const allowedUrls = urlsForUser(cookieValue);
@@ -106,7 +107,7 @@ app.get("/urls", (req, res) => {
   res.status(403).send("Please log in to view shortened URLS!");
 });
 
-//checked
+
 app.get("/urls/new", (req, res) => {
   const cookieValue = req.session.user_id;
   const user = users[cookieValue];
@@ -117,12 +118,11 @@ app.get("/urls/new", (req, res) => {
   res.redirect("/login");
 });
 
-//checked
+
 app.get("/urls/:id", (req, res) => {
   const cookieValue = req.session.user_id;
   const user = users[cookieValue];
   const id = req.params.id;
-
   if (!userLoggedIn(req)) {
     return res.status(403).send("Please log in to view shortened URLS!");
   };
@@ -134,7 +134,7 @@ app.get("/urls/:id", (req, res) => {
   }
 });
 
-//checked
+
 app.get("/register", (req, res) => {
   const cookieValue = req.session.user_id;
   const user = users[cookieValue];
@@ -146,7 +146,7 @@ app.get("/register", (req, res) => {
   res.render("user_registration", templateVars);
 });
 
-//checked (console prints an error when i input an id that does not exist)
+
 app.get("/u/:id", (req, res) => {
   if (urlDatabase[req.params.id]) {
     res.redirect(urlDatabase[req.params.id].longURL);
@@ -155,7 +155,7 @@ app.get("/u/:id", (req, res) => {
   }
 });
 
-//checked
+
 app.get("/login", (req, res) => {
   //varaible set to cookie object containg key(name of cookie) and value (id)
   const cookieValue = req.session.user_id;
@@ -170,7 +170,7 @@ app.get("/login", (req, res) => {
   res.render("user_login", templateVars);
 });
 
-//checked using urls.json after creation
+
 app.post("/urls", (req, res) => {
   if (userLoggedIn(req)) {
     const id = generateRandomString();
@@ -184,7 +184,7 @@ app.post("/urls", (req, res) => {
   res.status(403).send("Please log in to shorten the URl!");
 });
 
-//checked using urls.json after deleting
+
 app.post("/urls/:id/delete", (req, res) => {
   if (!urlDatabase[req.params.id]) {
     res.status(403).send("Please use Tiny App to shorten a URL first!");
@@ -200,7 +200,7 @@ app.post("/urls/:id/delete", (req, res) => {
   }
 });
 
-//checked with urls.json before and after edit 
+ 
 app.post("/urls/:id/edit", (req, res) => {
   const cookieValue = req.session.user_id;
   if (!urlDatabase[req.params.id]) {
@@ -217,7 +217,7 @@ app.post("/urls/:id/edit", (req, res) => {
   }
 });
 
-//checked
+
 app.post("/login", (req, res) => {
   const hashedPassword = hashPassword(req.body.password);
   let userInfo = userExist(req.body.email, users);
@@ -232,13 +232,13 @@ app.post("/login", (req, res) => {
   }
 });
 
-//checked
+
 app.post("/logout", (req, res) => {
   req.session = null;
   res.redirect("/login");
 });
 
-//checked
+
 app.post("/register", (req, res) => {
   const hashedPassword = hashPassword(req.body.password);
   if (req.body.email === "" || req.body.password === "") {
