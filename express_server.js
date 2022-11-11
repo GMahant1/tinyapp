@@ -12,11 +12,19 @@ function generateRandomString() {
 
 app.set("view engine", "ejs");
 
+//urls database
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "b2xVn2": {
+    longURL: "http://www.lighthouselabs.ca",
+    userID: "userRandomID",
+  },
+  "9sm5xK": {
+    longURL: "http://www.google.com",
+    userID: "userRandomID",
+  },
 };
 
+//user database
 const users = {
   userRandomID: {
     id: "userRandomID",
@@ -30,7 +38,7 @@ const users = {
   },
 };
 
-//user look up function
+//loop through users object, check if email provided equals one that exsists
 const userExist = function(email) {
   for (let u in users) {
     //console.log(u);
@@ -41,74 +49,173 @@ const userExist = function(email) {
   return null;
 };
 
+//check if cookie created (only happens when logged in) and check if user_id key has any value
+const userLoggedIn = function(req) {
+  //console.log(req.cookies);
+  if (req.cookies) {
+    if (req.cookies.user_id) {
+      return true;
+    }
+  }
+  return false;
+};
+
+//function to filter and only returns urls created by the logged in user
+const urlsForUser = function(id) {
+  for (let link in urlDatabase) {
+    if (urlDatabase[link].userID === id) {
+      return urlDatabase[link];
+    }
+  }
+  return null;
+};
+
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+//checked
 app.get("/", (req, res) => {
   res.send("Hello, Welcome to the Home Page!");
 });
 
+//checked
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
+//checked
+app.get("/users.json", (req, res) => {
+  res.json(users);
+});
+
+//checked
 app.get("/urls", (req, res) => {
-  const user = users[req.cookies["user_id"]];
+  const cookieValue = req.cookies["user_id"];
+  const user = users[cookieValue];
   const templateVars = { urls: urlDatabase, user };
-  res.render("urls_index", templateVars);
+  if (userLoggedIn(req)) {
+    if (urlsForUser(cookieValue) === null) {
+      //once this status shows, i cannot go to /login to change accounts. have to delete cookie and restart server
+      return res.status(403).send("You have not used Tiny App to create anything yet!");;
+    } else {
+      return res.render("urls_index", templateVars);
+    }
+  }
+  res.status(403).send("Please log in to view shortened URLS!");
 });
 
+//checked
 app.get("/urls/new", (req, res) => {
-  const user = users[req.cookies["user_id"]];
+  const cookieValue = req.cookies["user_id"];
+  const user = users[cookieValue];
   const templateVars = { user }
-  res.render("urls_new", templateVars);
+  if (userLoggedIn(req)) {
+    return res.render("urls_new", templateVars);
+  }
+  res.redirect("/login");
 });
 
+//checked
 app.get("/urls/:id", (req, res) => {
-  const user = users[req.cookies["user_id"]];
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], user };
-  res.render("urls_show", templateVars);
+  const cookieValue = req.cookies["user_id"];
+  const user = users[cookieValue];
+  const id = req.params.id;
+  const templateVars = { id, longURL: urlDatabase[id].longURL, user };
+  //console.log(req.params);
+  if (!userLoggedIn(req)) {
+    return res.status(403).send("Please log in to view shortened URLS!");
+  };
+  if (urlsForUser(cookieValue) === null) {
+    return res.status(403).send("This does not belong to you!")
+  } else {
+    return res.render("urls_show", templateVars);
+  }
 });
 
+//checked
 app.get("/register", (req, res) => {
-  const user = users[req.cookies["user_id"]];
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], user };
+  const cookieValue = req.cookies["user_id"];
+  const user = users[cookieValue];
+  const templateVars = { user };
+  //check if user is logged in, show /urls otherwise ask to register with "user_registration"
+  if (userLoggedIn(req)) {
+    return res.redirect("/urls");
+  } 
   res.render("user_registration", templateVars);
 })
 
+//checked (console prints an error when i input an id that does not exist)
 app.get("/u/:id", (req, res) => {
-  res.redirect(urlDatabase[req.params.id]);
+  if (!urlDatabase[req.params.id]) {
+    res.status(403).send("Please use Tiny App to shorten a URL first!");
+  }
+  res.redirect(urlDatabase[req.params.id].longURL);
 });
 
+//checked
 app.get("/login", (req, res) => {
-  const user = users[req.cookies["user_id"]];
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id], user };
+  //varaible set to cookie object containg key(name of cookie) and value (id)
+  const cookieValue = req.cookies["user_id"]
+  //pass variable (cookie name) into users object to access user information
+  const user = users[cookieValue];
+  //pass user object to display email when logged in 
+  const templateVars = { user };
+  //check if user logged in, show /urls otherwise send to /login
+  if (userLoggedIn(req)) {
+    return res.redirect("/urls");
+  }
   res.render("user_login", templateVars);
 })
 
+//checked using urls.json after creation
 app.post("/urls", (req, res) => {
-  //console.log(req.body); // Log the POST request body to the console
-  const id = generateRandomString();
-  urlDatabase[id] = req.body.longURL;
-  res.redirect(`/urls/${id}`);
+  console.log(req.body); // Log the POST request body to the console
+  if (userLoggedIn(req)) {
+    const id = generateRandomString();
+    const newURL = {
+      longURL: req.body.longURL,
+      userID: req.cookies.user_id
+    }
+    urlDatabase[id] = newURL;
+    return res.redirect(`/urls/${id}`);
+  } 
+  res.status(403).send("Please log in to shorten the URl!");
 });
 
+//checked using urls.json after deleting
 app.post("/urls/:id/delete", (req, res) => {
-  delete urlDatabase[req.params.id];
-  //console.log(urlDatabase);
-  res.redirect("/urls");
+  if (!urlDatabase[req.params.id]) {
+    res.status(403).send("Please use Tiny App to shorten a URL first!");
+  }
+  if (!userLoggedIn(req)) {
+    return res.status(403).send("Please log in to delete shortened URLS!");
+  };
+  if (urlsForUser(cookieValue) === null) {
+    return res.status(403).send("This does not belong to you!")
+  } else {
+    delete urlDatabase[req.params.id];
+    res.redirect("/urls");
+  }
 });
 
+//checked with urls.json before and after edit 
 app.post("/urls/:id/edit", (req, res) => {
-  urlDatabase[req.params.id] = req.body.longURL;
-  console.log(req.body);
-  console.log(req.params.id)
-  //console.log("This is an edit");
-  res.redirect("/urls");
+  if (!urlDatabase[req.params.id]) {
+    res.status(403).send("Please use Tiny App to shorten a URL first!");
+  }
+  if (!userLoggedIn(req)) {
+    return res.status(403).send("Please log in to edit shortened URLS!");
+  };
+  if (urlsForUser(cookieValue) === null) {
+    return res.status(403).send("This does not belong to you!")
+  } else {
+    urlDatabase[req.params.id].longURL = req.body.longURL;
+    return res.redirect("/urls");
+  }
 });
 
+//checked
 app.post("/login", (req, res) => {
-  console.log(req.body);
   let userInfo = userExist(req.body.email);
   if (userInfo === null) {
     res.sendStatus(403);
@@ -121,13 +228,15 @@ app.post("/login", (req, res) => {
   }
 })
 
+//checked
 app.post("/logout", (req, res) => {
   res.clearCookie("user_id");
   res.redirect("/login");
 })
 
+//checked
 app.post("/register", (req, res) => {
-  console.log(req.body);
+  //console.log(req.body);
   if (req.body.email === "" || req.body.password === "") {
     res.sendStatus(404);
   } if (userExist(req.body.email) !== null) {
@@ -136,7 +245,7 @@ app.post("/register", (req, res) => {
     const id = generateRandomString();
     users[id] = {id, email: req.body.email, password: req.body.password } ; 
     res.cookie("user_id", id);
-    console.log(users);
+    //console.log(users);
     res.redirect("/urls");
   }
 });
