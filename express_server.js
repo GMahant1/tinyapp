@@ -57,7 +57,7 @@ const urlsForUser = function(id) {
     if (urlDatabase[link].userID === id) {
       allowedUrls[link] = urlDatabase[link];
     }
-  } 
+  }
   if (Object.keys(allowedUrls).length === 0) {
     return null;
   }
@@ -122,7 +122,7 @@ app.get("/urls/:id", (req, res) => {
   const cookieValue = req.session.user_id;
   const user = users[cookieValue];
   const id = req.params.id;
-  
+
   if (!userLoggedIn(req)) {
     return res.status(403).send("Please log in to view shortened URLS!");
   };
