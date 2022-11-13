@@ -102,10 +102,8 @@ app.get("/urls", (req, res) => {
   const templateVars = { urls: allowedUrls, user };
   if (userLoggedIn(req)) {
     if (urlsForUser(cookieValue) === null) {
-      return res.status(403).send("You have not used Tiny App to create anything yet!");
-    } else {
       return res.render("urls_index", templateVars);
-    }
+    } 
   }
   res.status(403).send("Please log in to view shortened URLS!");
 });
