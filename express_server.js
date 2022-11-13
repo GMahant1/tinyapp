@@ -78,7 +78,10 @@ const hashPassword = function(password) {
 
 
 app.get("/", (req, res) => {
-  res.send("Hello, Welcome to the Home Page!");
+  if (userLoggedIn(req)) {
+    return res.redirect("/urls");
+  }
+  res.redirect("/login");
 });
 
 
