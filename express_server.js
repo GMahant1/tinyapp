@@ -245,7 +245,7 @@ app.post("/logout", (req, res) => {
 app.post("/register", (req, res) => {
   const hashedPassword = hashPassword(req.body.password);
   if (req.body.email === "" || req.body.password === "") {
-    res.sendStatus(404);
+    res.status(403).send("Please fill in the required information to register!");
   } if (userExist(req.body.email, users) !== null) {
     res.sendStatus(404);
   } else {
